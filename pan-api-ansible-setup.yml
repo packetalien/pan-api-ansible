@@ -1,0 +1,99 @@
+- name: API Lab Setup Playbook
+  hosts: my-firewall
+  connection: local
+  gather_facts: False
+
+  roles:
+    - role: PaloAltoNetworks.paloaltonetworks
+
+  vars:
+    tag_names: ["tag01", "tag02", "tag03"]
+    dag_name: "group2"
+    dag_match_filter: "'tag1' and 'tag2'"
+    ntp_server_primary: "us.pool.ntp.org"
+    ntp_server_secondary: "north-america.pool.ntp.org"
+
+  tasks:
+  - name: Grab the credentials from ansible-vault
+    include_vars: 'firewall-secrets.yml'
+    no_log: 'yes'
+
+  - name: Adding Address Object 10.0.0.1
+    panos_object:
+      ip_address: '{{ ip_address }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
+      operation: 'add'
+      addressobject: 'host-10.0.0.1'
+      address: '10.0.0.1'
+      address_type: 'ip-netmask'
+      description: 'API Demo Address 10.0.0.1'
+
+  - name: Adding Address Object 10.0.0.2
+    panos_object:
+      ip_address: '{{ ip_address }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
+      operation: 'add'
+      addressobject: 'host-10.0.0.2'
+      address: '10.0.0.2'
+      address_type: 'ip-netmask'
+      description: 'API Demo Address 10.0.0.2'
+
+  - name: Adding Address Object 10.0.0.3
+    panos_object:
+      ip_address: '{{ ip_address }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
+      operation: 'add'
+      addressobject: 'host-10.0.0.3'
+      address: '10.0.0.3'
+      address_type: 'ip-netmask'
+      description: 'API Demo Address 10.0.0.3'
+
+  - name: Adding Address Object 10.0.0.4
+    panos_object:
+      ip_address: '{{ ip_address }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
+      operation: 'add'
+      addressobject: 'host-10.0.0.4'
+      address: '10.0.0.4'
+      address_type: 'ip-netmask'
+      description: 'API Demo Address 10.0.0.4'
+
+  - name: Create dynamic address group group2 for API Lab
+    panos_dag:
+      ip_address: "{{ ip_address }}"
+      password: "{{ password }}"
+      dag_name: "{{ dag_name }}"
+      dag_match_filter: "{{ dag_match_filter }}"
+      description: 'Add / create dynamic address group to allow access to SaaS Applications'
+      operation: 'add'
+    tags: "create-dag"
+
+  - name: Add address group group1 to the firewall
+    panos_object:
+      ip_address: '{{ ip_address }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
+      operation: 'add'
+      addressgroup: 'group1'
+      static_value: ['host-10.0.0.1','host-10.0.0.2','host-10.0.0.3']
+      description: 'This is address group1 for the API LAB/DEMO'
+      operation: 'add'
+
+  - name: Setting NTP for the lab
+    panos_mgtconfig:
+      ip_address: "{{ ip_address }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      ntp_server_primary: "{{ ntp_server_primary }}"
+      ntp_server_secondary: "{{ ntp_server_secondary }}"
+      commit: False
+
+  - name: Commit pending liab changes
+    panos_commit:
+      ip_address: '{{ ip_address }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
